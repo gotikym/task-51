@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 internal class Program
@@ -35,7 +35,7 @@ class Autoservice
             Client client = _clients.Dequeue();
             ShowInfoRepair(client.Defect);
 
-            if (_storage.FindPart(client.Defect))
+            if (_storage.ThereAvailable(client.Defect))
             {
                 Console.WriteLine("Данная деталь есть на складе");
             }
@@ -69,7 +69,7 @@ class Autoservice
 
             if (isRepair == true)
             {
-                if (client.VerifyPart())
+                if (client.IsSamePart())
                 {
                     int costRepair = CalculateCostRepair(client.NewPart);
                     Console.WriteLine("Деталь успешна заменена, клиент доволен");
@@ -106,13 +106,15 @@ class Autoservice
 
     private void AddClients()
     {
-        _clients.Enqueue(new Client());
-        _clients.Enqueue(new Client());
-        _clients.Enqueue(new Client());
-        _clients.Enqueue(new Client());
-        _clients.Enqueue(new Client());
-        _clients.Enqueue(new Client());
-        _clients.Enqueue(new Client());
+        _clients.Enqueue(new Client(_storage.CreateDefect()));
+        _clients.Enqueue(new Client(_storage.CreateDefect()));
+        _clients.Enqueue(new Client(_storage.CreateDefect()));
+        _clients.Enqueue(new Client(_storage.CreateDefect()));
+        _clients.Enqueue(new Client(_storage.CreateDefect()));
+        _clients.Enqueue(new Client(_storage.CreateDefect()));
+        _clients.Enqueue(new Client(_storage.CreateDefect()));
+        _clients.Enqueue(new Client(_storage.CreateDefect()));
+        _clients.Enqueue(new Client(_storage.CreateDefect()));
     }
 
     private int CalculateCostRepair(Part part)
@@ -143,6 +145,7 @@ class Autoservice
 
 class Storage
 {
+    private static Random _random = new Random();
     private List<Part> _parts = new List<Part>();
 
     public Storage()
@@ -150,7 +153,7 @@ class Storage
         AddParts();
     }
 
-    public bool FindPart(Part defect)
+    public bool ThereAvailable(Part defect)
     {
         foreach (Part part in _parts)
         {
@@ -168,11 +171,14 @@ class Storage
 
     public Part ChoosePart()
     {
-        return _parts[GetNumber(_parts.Capacity)];
+        return _parts[GetNumber(_parts.Count)];
     }
 
-    public Part CreateDefect(int index)
+    public Part CreateDefect()
     {
+        int firstIndex = 0;
+        int lastIndex = _parts.Count;
+        int index = _random.Next(firstIndex, lastIndex);
         return new Part(_parts[index].Name, _parts[index].Cost);
     }
 
@@ -187,12 +193,7 @@ class Storage
         }
     }
 
-    public int GetCount()
-    {
-        return _parts.Count;
-    }
-
-    public void AddParts()
+    private void AddParts()
     {
         _parts.Add(new Part("Амортизатор", 3500));
         _parts.Add(new Part("Стабилизатор", 2500));
@@ -208,7 +209,7 @@ class Storage
         _parts.Add(new Part("Фара", 32000));
     }
 
-    private int GetNumber(int listCapacity)
+    private int GetNumber(int listCount)
     {
         bool isParse = false;
         int numberForReturn = 0;
@@ -218,7 +219,7 @@ class Storage
             string userNumber = Console.ReadLine();
             int.TryParse(userNumber, out numberForReturn);
 
-            if (numberForReturn <= 0 || numberForReturn > listCapacity)
+            if (numberForReturn < 0 || numberForReturn >= listCount)
             {
                 Console.WriteLine("Вводи одну из предложенных цифр, а не из космоса =_=");
             }
@@ -234,12 +235,12 @@ class Storage
 
 class Client
 {
-    private static Random _random = new Random();
+    
     private int _money = 50000;
 
-    public Client()
+    public Client(Part defect)
     {
-        FindDefect();
+        Defect = defect;
     }
 
     public Part Defect { get; private set; }
@@ -260,17 +261,9 @@ class Client
         NewPart = part;
     }
 
-    public bool VerifyPart()
+    public bool IsSamePart()
     {
         return Defect.Name == NewPart.Name;
-    }
-
-    private void FindDefect()
-    {
-        Storage storage = new Storage();
-        int firstIndex = 0;
-        int lastIndex = storage.GetCount();
-        Defect = storage.CreateDefect(_random.Next(firstIndex, lastIndex));
     }
 }
 
