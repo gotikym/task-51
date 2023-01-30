@@ -25,77 +25,100 @@ class Autoservice
 
     public void Work()
     {
-        const string CommandRefuse = "refuse";
-        const string CommandRepair = "repair";
-        bool isRepair = false;
-        bool isExit = false;
-
         while (_clients.Count > 0)
         {
             Client client = _clients.Dequeue();
             ShowInfoRepair(client.Defect);
 
-            if (_storage.ThereAvailable(client.Defect))
-            {
-                Console.WriteLine("Данная деталь есть на складе");
-            }
-            else
-            {
-                Console.WriteLine("У нас нет нужной детали на складе");
-            }
+            ThereAvailable(client.Defect);            
 
-            Console.WriteLine("Отказать клиенту и выплатить штраф - " + CommandRefuse + ", заменить деталь - " + CommandRepair);
-
-            while (isExit == false)
-            {
-                string userChoice = Console.ReadLine();
-
-                if (userChoice == CommandRefuse)
-                {
-                    Console.WriteLine("Клиент недоволен, что потерял своё время, благо есть штраф, который немного его успокоит...");
-                    PayFine();
-                    client.TakeMoney(_costFine);
-                    isExit = true;
-                }
-                else if (userChoice == CommandRepair)
-                {
-                    Console.WriteLine("Выберете деталь со склада, для замены");
-                    _storage.ShowParts();
-                    Repair(client, _storage.ChoosePart());
-                    isRepair = true;
-                    isExit = true;
-                }
-            }
-
-            if (isRepair == true)
+            if (IsRepair(client))
             {
                 if (client.IsSamePart())
                 {
-                    int costRepair = CalculateCostRepair(client.NewPart);
-                    Console.WriteLine("Деталь успешна заменена, клиент доволен");
-                    client.Pay(costRepair);
-                    TakeMoney(costRepair);
+                    CloseDeal(client);
                 }
                 else
                 {
-                    int compensation = CalculateCompensation(client.Defect, client.NewPart);
-                    Console.WriteLine("Мастера хотели схитрить или просто запарились в работе и заменили не ту деталь, теперь придется выплачивать компенсацию");
-                    PayCompensation(compensation);
-                    client.TakeMoney(compensation);
+                    PayCompensation(client);
                 }
             }
 
             Console.ReadKey();
             Console.Clear();
-            isExit = false;
-            isRepair = false;
         }
     }
 
-    private void Repair(Client client, Part part)
+    private void ThereAvailable(Part defect)
     {
+        if (_storage.ThereAvailable(defect))
+        {
+            Console.WriteLine("Данная деталь есть на складе");
+        }
+        else
+        {
+            Console.WriteLine("У нас нет нужной детали на складе");
+        }
+    }
+
+    private bool IsRepair(Client client)
+    {
+        const string CommandRefuse = "refuse";
+        const string CommandRepair = "repair";
+        bool isRepair = false;
+        bool isExit = false;
+        Console.WriteLine("Отказать клиенту и выплатить штраф - " + CommandRefuse + ", заменить деталь - " + CommandRepair);
+
+        while (isExit == false)
+        {
+            string userChoice = Console.ReadLine();
+
+            if (userChoice == CommandRefuse)
+            {
+                Refuse(client);
+                isExit = true;
+            }
+            else if (userChoice == CommandRepair)
+            {
+                Repair(client);
+                isRepair = true;
+                isExit = true;
+            }
+        }
+
+        return isRepair;
+    }
+
+    private void Refuse(Client client)
+    {
+        Console.WriteLine("Клиент недоволен, что потерял своё время, благо есть штраф, который немного его успокоит...");
+        PayFine();
+        client.TakeMoney(_costFine);
+    }
+
+    private void Repair(Client client)
+    {        
+        Console.WriteLine("Выберете деталь со склада, для замены");
+        _storage.ShowParts();
+        Part part = _storage.ChoosePart();
         client.AgreeRepair(part);
         _storage.RemovePart(part);
+    }
+
+    private void CloseDeal(Client client)
+    {
+        int costRepair = CalculateCostRepair(client.NewPart);
+        Console.WriteLine("Деталь успешна заменена, клиент доволен");
+        client.Pay(costRepair);
+        TakeMoney(costRepair);
+    }
+
+    private void PayCompensation(Client client)
+    {
+        int compensation = CalculateCompensation(client.Defect, client.NewPart);
+        Console.WriteLine("Мастера хотели схитрить или просто запарились в работе и заменили не ту деталь, теперь придется выплачивать компенсацию");
+        PayCompensation(compensation);
+        client.TakeMoney(compensation);
     }
 
     private void ShowInfoRepair(Part part)
