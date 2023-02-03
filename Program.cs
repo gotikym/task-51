@@ -30,7 +30,7 @@ class Autoservice
             Client client = _clients.Dequeue();
             ShowInfoRepair(client.Defect);
 
-            ThereAvailable(client.Defect);            
+            HavePart(client.Defect);            
 
             if (IsRepair(client))
             {
@@ -49,9 +49,9 @@ class Autoservice
         }
     }
 
-    private void ThereAvailable(Part defect)
+    private void HavePart(Part defect)
     {
-        if (_storage.ThereAvailable(defect))
+        if (_storage.HavePart(defect))
         {
             Console.WriteLine("Данная деталь есть на складе");
         }
@@ -176,7 +176,7 @@ class Storage
         AddParts();
     }
 
-    public bool ThereAvailable(Part defect)
+    public bool HavePart(Part defect)
     {
         foreach (Part part in _parts)
         {
